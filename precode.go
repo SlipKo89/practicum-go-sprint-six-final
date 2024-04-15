@@ -58,17 +58,18 @@ func getTasks(w http.ResponseWriter, r *http.Request) {
 	w.Write(resp)
 }
 
-func getTasks_id(w http.ResponseWriter, r *http.Request) {
+func getTasksid(w http.ResponseWriter, r *http.Request) {
 	id := chi.URLParam(r, "id")
-
 	task, ok := tasks[id]
 	if !ok {
-		http.Error(w, "Таска не найдена", http.StatusNoContent)
+		fmt.Println("TasksID")
+		http.Error(w, "Таска не найдена", http.StatusBadRequest)
 		return
 	}
 
 	resp, err := json.Marshal(task)
 	if err != nil {
+		fmt.Println("TasksID")
 		http.Error(w, err.Error(), http.StatusBadRequest)
 		return
 	}
@@ -99,13 +100,28 @@ func createTask(w http.ResponseWriter, r *http.Request) {
 	w.WriteHeader(http.StatusCreated)
 }
 
+func deleteTask(w http.ResponseWriter, r *http.Request) {
+	id := chi.URLParam(r, "id")
+
+	_, ok := tasks[id]
+	if !ok {
+		fmt.Println("TasksID")
+		http.Error(w, "Таска не найдена", http.StatusBadRequest)
+		return
+	}
+	delete(tasks, id)
+	w.Header().Set("Content-Type", "application/json")
+	w.WriteHeader(http.StatusOK)
+}
+
 func main() {
 	r := chi.NewRouter()
 
 	// здесь регистрируйте ваши обработчики
 	r.Get("/tasks", getTasks)
 	r.Post("/tasks", createTask)
-	r.Get("/artist/{id}", getTasks_id)
+	r.Get("/tasks/{id}", getTasksid)
+	r.Delete("/tasks/{id}", deleteTask)
 
 	if err := http.ListenAndServe(":8080", r); err != nil {
 		fmt.Printf("Ошибка при запуске сервера: %s", err.Error())
